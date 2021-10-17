@@ -1,0 +1,347 @@
+<!doctype html>
+
+<!--
+Checking for SSNs? Made you look! But at least we won't
+(can't, for crying out loud) prosecute you for it.
+
+Photo credit: Office of Missouri Governor Mike Parson
+-->
+
+<html lang="en">
+<head>
+	<title>Editable Cyber</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+	<style type="text/css">
+		html, body { margin: 0em; padding: 0em; }
+		body {
+			background: #333;
+			line-height: 1.1em;
+			text-align: center;
+		}
+		/* rendering and view */
+		#offscreen_render {
+			position: absolute;
+			top: -10px; left: -10px;
+			font-family: Montserrat, Arial, sans-serif, sans;
+		}
+		#render_overlay {
+			display: none;
+			position: absolute;
+			left: 0; top: 0; bottom: 0; right: 0;
+			background: rgba(0, 0, 0, 0.5);
+		}
+		#render_overlay:target {
+			display: block;
+		}
+		#destination_image {
+			position: absolute;
+			margin: auto;
+			left: 0; top: 0; bottom: 0; right: 0;
+			max-width: 90%;
+			max-height: 90%;
+		}
+		/* live editing */
+		#wizzywigs {  /* This is the name of the messy white wigs that are popularly worn in Silicon Valley to commemorate the wizards of coding who founded the modern techbro movement. Similar conventions persist in other tradition-obsessed fields---in particular the British legal profession, where the wigs originated, and where the litigious nature of the customers led suppliers to protect themselves from buyers' remorse with the backronym "What You See Is What You Get!" */
+			margin: 0px;
+			width: 200px;
+			height: 200px;
+			position: relative;
+			display: inline-block; vertical-align: middle;
+		}
+		#background {
+			width: 100%; height: 100%;
+			position: absolute;
+			top: 0px; bottom: 0px; left: 0px; right: 0px;
+			touch-action: none;
+		}
+		#stamp {
+			position: absolute;
+			left: 7%; top: 80.846%;
+			width: 26.769%; height: 12.154%;
+			pointer-events: none;
+		}
+		/* Form controls */
+		form#form {
+			text-align: center;
+			margin: 0px; padding: 0.5em;
+			display: inline-block; vertical-align: middle;
+		}
+		textarea {
+			display: block;
+			font-family: Montserrat, Arial, sans-serif, sans;
+			line-height: 1.1em;
+			color: #fff; background: transparent;
+			border: none; margin: 0em; padding: 0em;
+		}
+		#text1 {
+			position: absolute;
+			left: 7%; top: 10.5%; width: 86%;
+			font-weight: 600;
+		}
+		#text2 {
+			position: absolute;
+			left: 7%; top: 49.8%; width: 86%;
+			font-weight: 400;
+		}
+		#text3 {
+			position: absolute;
+			left: 7%; top: 71.5%; width: 86%;
+			font-weight: 700;
+		}
+		#text4 {
+			position: absolute;
+			left: 28%; top: 87.7%; width: 65%;
+			font-weight: 400;
+		}
+		#text5 {
+			color: #000;
+			position: absolute;
+			left: 10.7%; top: 85.1%; width: 15%;
+			font-weight: 700;
+		}
+		#image_upload {
+			opacity: 0;
+			position: absolute;
+			top: -2em;
+			left: 0px;
+			z-index: -1;
+		}
+		#download_size {
+			font-size: 1rem;
+		}
+		button, label[for="image_upload"], input {
+			display: inline-block;
+			vertical-align: middle;
+			font-size: 1rem;
+			margin: 0.25em 0em;
+		}
+		button, label[for="image_upload"] {
+			padding: 0.25em 0.5em;
+			border-radius: 1em;
+			border: 1px solid #000;
+			color: #000; background: #eee;
+		}
+		button:hover, label[for="image_upload"]:hover {
+			background: #ffe;
+		}
+	</style>
+	<script type="text/javascript">
+		window.addEventListener('DOMContentLoaded', function () {
+			var offscreen_canvas = document.getElementById('offscreen_render');
+			var background_canvas = document.getElementById('background');
+			var wizzywigs = document.getElementById('wizzywigs');
+			var stamp = new Image();
+			var background = new Image();
+			var text1 = document.getElementById('text1');
+			var text2 = document.getElementById('text2');
+			var text3 = document.getElementById('text3');
+			var text4 = document.getElementById('text4');
+			var text5 = document.getElementById('text5');
+			function resize() {
+				var form = document.getElementById('form');
+				var size = Math.floor(Math.max(
+					Math.min(window.innerWidth, window.innerHeight - form.offsetHeight),
+					Math.min(window.innerHeight, window.innerWidth - form.offsetWidth)
+				));
+				wizzywigs.style.width = wizzywigs.style.height = size + 'px';
+				text1.style.fontSize = 0.075 * size + 'px';
+				text2.style.fontSize = 0.052 * size + 'px';
+				text3.style.fontSize = 0.035 * size + 'px';
+				text4.style.fontSize = 0.032 * size + 'px';
+				text5.style.fontSize = 0.017 * size + 'px';
+				redraw_background(background_canvas);
+			}
+			function redraw() {
+				// Reset and draw background
+				redraw_background(offscreen_canvas);
+
+				var w = offscreen_canvas.width;
+				var c = offscreen_canvas.getContext('2d');
+
+				// Cyber First logo
+				c.drawImage(stamp, 0.07000 * w, 0.80846 * w, 0.26769 * w, 0.12154 * w);
+
+				c.fillStyle = '#fff';
+				// Mike Parson's next job could be in cyber.
+				var fontsize = 0.075 * w;
+				c.font = '600 ' + fontsize + 'px Montserrat';
+				var lines = text1.value.split('\n');
+				for (var i = 0; i < lines.length; ++i) {
+					c.fillText(lines[i], 0.07000 * w, 0.176 * w + fontsize * 1.1 * i);
+				}
+				// (he just doesn't know it yet)
+				var fontsize = 0.052 * w;
+				c.font = '400 ' + fontsize + 'px Montserrat';
+				var lines = text2.value.split('\n');
+				for (var i = 0; i < lines.length; ++i) {
+					c.fillText(lines[i], 0.07000 * w, 0.546 * w + fontsize * 1.1 * i);
+				}
+				// Refresh. Reboot. Reinstall.
+				var fontsize = 0.035 * w;
+				c.font = '700 ' + fontsize + 'px Montserrat';
+				var lines = text3.value.split('\n');
+				for (var i = 0; i < lines.length; ++i) {
+					c.fillText(lines[i], 0.07000 * w, 0.746 * w + fontsize * 1.1 * i);
+				}
+				// Something to make it clear this isn't actually HM Government
+				var fontsize = 0.032 * w;
+				c.font = '400 ' + fontsize + 'px Montserrat';
+				var lines = text4.value.split('\n');
+				for (var i = 0; i < lines.length; ++i) {
+					c.fillText(lines[i], 0.28000 * w, 0.906 * w + fontsize * 1.1 * i);
+				}
+				// Cyber Yay
+				var fontsize = 0.017 * w;
+				c.font = '700 ' + fontsize + 'px Montserrat';
+				c.fillStyle = '#000';
+				var lines = text5.value.split('\n');
+				for (var i = 0; i < lines.length; ++i) {
+					c.fillText(lines[i], 0.10700 * w, 0.866 * w + fontsize * 1.1 * i);
+				}
+			}
+			var background_left = 0;
+			var background_top = 0;
+			function reload_background() {
+				var w = background.naturalWidth || 100;
+				var h = background.naturalHeight || 100;
+				var s = Math.min(w, h);
+				background_left = (w - s) / 2;
+				background_top = (h - s) / 2;
+				redraw_background(background_canvas);
+			}
+			function redraw_background(target) {
+				var s_src = Math.min(background.naturalWidth || 100, background.naturalHeight || 100);
+				var s_dst = target.width = target.height = target.offsetWidth;
+				var c = target.getContext('2d');
+				c.drawImage(background, background_left, background_top, s_src, s_src, 0, 0, s_dst, s_dst);
+			}
+			document.getElementById('render_overlay').addEventListener('click', function (e) {
+				if (this === e.target) {
+					if (window.history && window.history.back) {
+						window.history.back();
+					} else {
+						window.location = '#';
+					}
+				}
+			});
+			document.fonts.ready.then(function () {
+				window.addEventListener('resize', resize);
+				document.getElementById('destination_image').addEventListener('load', function () {
+					window.location = '#render_overlay';
+				});
+				document.getElementById('form').addEventListener('submit', function (e) {
+					e.preventDefault();
+					offscreen_canvas.width = offscreen_canvas.height = document.getElementById('download_size').value;
+					offscreen_canvas.style.left = -offscreen_canvas.width + "px";
+					offscreen_canvas.style.top = -offscreen_canvas.height + "px";
+					redraw();
+					var dest = document.getElementById('destination_image');
+					if (offscreen_canvas.toBlob && URL && URL.createObjectURL) {
+						offscreen_canvas.toBlob(function (blob) {
+							var url = URL.createObjectURL(blob);
+							if (dest.src) {
+								URL.revokeObjectURL(dest.src);
+							}
+							dest.src = url;
+						});
+					} else {
+						dest.src = offscreen_canvas.toDataURL();
+					}
+				});
+				resize();
+			});
+			stamp.addEventListener('load', redraw, false);
+			stamp.src = 'stamp.png';
+			background.addEventListener('load', reload_background, false);
+			background.src = 'mikeparson2.jpg';  // Photo credit: Office of Missouri Governor Mike Parson
+			document.getElementById('image_upload').addEventListener('change', function () {
+				if (!this.files.length) { return; }
+				background.src = window.URL.createObjectURL(this.files[0]);
+				resize();
+			});
+			// drag background
+			var mouse_is_down = false;
+			var mouse_origin_x = 0;
+			var mouse_origin_y = 0;
+			function mousedown(e) {
+				mouse_is_down = true;
+				mouse_origin_x = e.clientX;
+				mouse_origin_y = e.clientY;
+			}
+			function mouseup() { mouse_is_down = false; }
+			function mousemove(e) {
+				if (!mouse_is_down) { return; }
+				e.preventDefault();
+				var dx = e.clientX - mouse_origin_x;
+				var dy = e.clientY - mouse_origin_y;
+				mouse_origin_x = e.clientX;
+				mouse_origin_y = e.clientY;
+				var w = background.naturalWidth || 100;
+				var h = background.naturalHeight || 100;
+				var s = Math.min(w, h);
+				background_left -= dx * s / wizzywigs.offsetWidth;
+				background_top -= dy * s / wizzywigs.offsetHeight;
+				background_left = Math.min(Math.max(0, background_left), w - s);
+				background_top = Math.min(Math.max(0, background_top), h - s);
+				redraw_background(background_canvas);
+			}
+			function pointerdown(e) {
+				e.preventDefault();
+				mousedown(e);
+			}
+			background_canvas.addEventListener('mousemove', mousemove);
+			background_canvas.addEventListener('pointermove', mousemove);
+			background_canvas.addEventListener('mousedown', mousedown);
+			background_canvas.addEventListener('pointerdown', pointerdown);
+			window.addEventListener('mouseup', mouseup);
+			window.addEventListener('blur', mouseup);
+			window.addEventListener('pointerup', mouseup);
+			window.addEventListener('pointercancel', mouseup);
+			window.addEventListener('pointerleave', mouseup);
+		});
+	</script>
+</head>
+<body>
+
+<canvas id="offscreen_render" width="10" height="10">
+</canvas>
+
+<div id="wizzywigs">
+<canvas id="background">
+	<img src="thumb.jpg" alt="Sample image" />
+	Interactivity on this page requires HTML5 Canvas support.
+</canvas>
+<img id="stamp" src="stamp.png" />
+<textarea id="text1" rows="4">Mike Parson's
+next job
+could be
+in cyber.</textarea>
+<textarea id="text2" rows="2">(he just doesn't
+know it yet)</textarea>
+<textarea id="text3" rows="2">Rethink. Reskill. Read literally any
+HTML tutorial like it's 1995.</textarea>
+<textarea id="text4" rows="1">Not Your Government</textarea>
+<textarea id="text5" rows="2">Cyber
+Yay</textarea>
+</div><!--
+This comment suppresses the space character between inline-block elements
+--><form id="form">
+	<div>
+		<input type="file" id="image_upload" />
+		<label for="image_upload">Select background</label>
+	</div>
+	<div>
+		<button type="submit" id="image_download">Render at size</button>
+		<input type="number" value="800" id="download_size" min="1" step="1" style="width: 5em;" />
+	</div>
+</form>
+
+<div id="render_overlay">
+	<img id="destination_image" />
+</div>
+
+</body>
+</html>
