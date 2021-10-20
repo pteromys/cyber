@@ -9,7 +9,7 @@ Photo credit: Office of Missouri Governor Mike Parson
 
 <html lang="en">
 <head>
-	<title>Editable Cyber</title>
+	<title>Cyber Ad Generator</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,21 +27,30 @@ Photo credit: Office of Missouri Governor Mike Parson
 			top: -10px; left: -10px;
 			font-family: Montserrat, Arial, sans-serif, sans;
 		}
-		#render_overlay {
+		.overlay {
 			display: none;
 			position: absolute;
 			left: 0; top: 0; bottom: 0; right: 0;
 			background: rgba(0, 0, 0, 0.5);
 		}
-		#render_overlay:target {
+		.overlay:target {
 			display: block;
 		}
-		#destination_image {
+		.overlay > * {
 			position: absolute;
 			margin: auto;
 			left: 0; top: 0; bottom: 0; right: 0;
+			box-sizing: border-box;
 			max-width: 90%;
 			max-height: 90%;
+			color: #000;
+			background: #ddd;
+		}
+		#help > * {
+			max-width: 80%;
+			padding: 0em 2em;
+			top: 2em; bottom: auto;
+			border-radius: 1em;
 		}
 		/* live editing */
 		#wizzywigs {  /* This is the name of the messy white wigs that are popularly worn in Silicon Valley to commemorate the wizards of coding who founded the modern techbro movement. Similar conventions persist in other tradition-obsessed fields---in particular the British legal profession, where the wigs originated, and where the litigious nature of the customers led suppliers to protect themselves from buyers' remorse with the backronym "What You See Is What You Get!" */
@@ -112,20 +121,23 @@ Photo credit: Office of Missouri Governor Mike Parson
 		#download_size {
 			font-size: 1rem;
 		}
-		button, label[for="image_upload"], input {
+		button, label[for="image_upload"], input, #help_link {
 			display: inline-block;
 			vertical-align: middle;
 			font-size: 1rem;
 			margin: 0.25em 0em;
 		}
-		button, label[for="image_upload"] {
+		button, label[for="image_upload"], #help_link {
 			padding: 0.25em 0.5em;
 			border-radius: 1em;
 			border: 1px solid #000;
 			color: #000; background: #eee;
 		}
-		button:hover, label[for="image_upload"]:hover {
+		button:hover, label[for="image_upload"]:hover, #help_link:hover {
 			background: #ffe;
+		}
+		#help_link {
+			text-decoration: none;
 		}
 	</style>
 	<script type="text/javascript">
@@ -218,7 +230,7 @@ Photo credit: Office of Missouri Governor Mike Parson
 				var c = target.getContext('2d');
 				c.drawImage(background, background_left, background_top, s_src, s_src, 0, 0, s_dst, s_dst);
 			}
-			document.getElementById('render_overlay').addEventListener('click', function (e) {
+			function dismiss_overlay(e) {
 				if (this === e.target) {
 					if (window.history && window.history.back) {
 						window.history.back();
@@ -226,7 +238,9 @@ Photo credit: Office of Missouri Governor Mike Parson
 						window.location = '#';
 					}
 				}
-			});
+			}
+			document.getElementById('render_overlay').addEventListener('click', dismiss_overlay);
+			document.getElementById('help').addEventListener('click', dismiss_overlay);
 			document.fonts.ready.then(function () {
 				window.addEventListener('resize', resize);
 				document.getElementById('destination_image').addEventListener('load', function () {
@@ -332,6 +346,7 @@ This comment suppresses the space character between inline-block elements
 	<div>
 		<input type="file" id="image_upload" />
 		<label for="image_upload">Select background</label>
+		<a id="help_link" href="#help">Help???</a>
 	</div>
 	<div>
 		<button type="submit" id="image_download">Render at size</button>
@@ -339,8 +354,16 @@ This comment suppresses the space character between inline-block elements
 	</div>
 </form>
 
-<div id="render_overlay">
+<div class="overlay" id="render_overlay">
 	<img id="destination_image" />
+</div>
+
+<div class="overlay" id="help">
+	<div>
+		<p>All text is editable.</p>
+		<p>Background is draggable.</p>
+		<p>Upload your own background, then hit the render button to get an image you can save or paste.</p>
+	</div>
 </div>
 
 </body>
